@@ -1,8 +1,6 @@
 ﻿using RNGBreaker.DTOs;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RNGBreaker
@@ -79,10 +77,45 @@ namespace RNGBreaker
             else
             {
                 lcgBrokenResult.AccountBalance = betResult.Account.Money;
-                lcgBrokenResult.LastValue = betResult.RealNumber;
+                lcgBrokenResult.LastValue = (int)betResult.RealNumber;
                 await WinLcg(account, lcgBrokenResult);
             }
         }
 
+        public async Task BreakMt()
+        {
+            var startTime = (uint) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var account = await _casinoHttpClient.CreateAccount();
+            var result = await BreakMt(account, startTime);
+            if (result != null)
+            {
+                Console.WriteLine("Broke");
+            }
+        }
+
+        public async Task<MT19937> BreakMt(AccountResponse account, uint start)
+        {
+            var betRequest = new BetRequest
+            {
+                PlayerId = account.Id,
+                Money = 1,
+                Number = 1
+            };
+            var result = await _casinoHttpClient.MakeABet(Mode.Mt, betRequest);
+            var end = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            for (uint i = start; i < end; i++)
+            {
+                var mt = new MT19937(i);
+                for (int j = 0; j < 636; j++)
+                {
+                    var number = mt.Next();
+                    if (number == (uint) result.RealNumber)
+                    {
+                        return mt;
+                    }
+                }
+            }
+            return null;
+        }
     }
 }
