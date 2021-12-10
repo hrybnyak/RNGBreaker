@@ -61,25 +61,7 @@ namespace RNGBreaker
 
         private async Task WinLcg (AccountResponse account, LcgBrokenResult lcgBrokenResult)
         {
-            var predict = lcgBrokenResult.PredictNext();
-            var betRequest = new BetRequest
-            {
-                Money = lcgBrokenResult.AccountBalance - 1,
-                Number = predict,
-                PlayerId = account.Id
-            };
-            var betResult = await _casinoHttpClient.MakeABet(Mode.Lcg, betRequest);
-            if (betResult.Account.Money > 1000000)
-            {
-                Console.WriteLine(betResult.Message);
-                return;
-            }
-            else
-            {
-                lcgBrokenResult.AccountBalance = betResult.Account.Money;
-                lcgBrokenResult.LastValue = (int)betResult.RealNumber;
-                await WinLcg(account, lcgBrokenResult);
-            }
+            await Win(Mode.Lcg, account, () => lcgBrokenResult.PredictNext(), lcgBrokenResult.AccountBalance);
         }
 
         public async Task BreakMt()
@@ -87,10 +69,11 @@ namespace RNGBreaker
             var startTime = (uint) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var account = await _casinoHttpClient.CreateAccount();
             var result = await BreakMt(account, startTime);
-            if (result != null)
+            if (result == null)
             {
-                Console.WriteLine("Broke");
+                throw new ArgumentException("Couldn't find rigth number");
             }
+            await WinMt(account, result);
         }
 
         public async Task<MT19937> BreakMt(AccountResponse account, uint start)
@@ -109,13 +92,39 @@ namespace RNGBreaker
                 for (int j = 0; j < 626; j++)
                 {
                     var number = mt.Next();
-                    if (number == (uint) result.RealNumber)
+                    if (number == result.RealNumber)
                     {
                         return mt;
                     }
                 }
             }
             return null;
+        }
+
+        public async Task WinMt (AccountResponse account, MT19937 mtGenerator)
+        {
+            await Win(Mode.Mt, account, () => mtGenerator.Next(), account.Money - 1);
+        }
+
+        public async Task Win (Mode mode, AccountResponse account, Func<long> numberGenerator, int accountBalance)
+        {
+            var predict = numberGenerator.Invoke();
+            var betRequest = new BetRequest
+            {
+                Money = accountBalance / 2,
+                Number = predict,
+                PlayerId = account.Id
+            };
+            var betResult = await _casinoHttpClient.MakeABet(mode, betRequest);
+            if (betResult.Account.Money > 1000000)
+            {
+                Console.WriteLine(betResult.Message);
+                return;
+            }
+            else
+            {
+                await Win(mode, account, numberGenerator, betResult.Account.Money);
+            }
         }
     }
 }

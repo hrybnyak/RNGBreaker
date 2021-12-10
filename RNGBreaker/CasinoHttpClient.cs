@@ -22,7 +22,7 @@ namespace RNGBreaker
 
         public async Task<AccountResponse> CreateAccount()
         {
-            int counter = 200;
+            int counter = 1000;
             while (true)
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, CreateAccountAddress + counter);
