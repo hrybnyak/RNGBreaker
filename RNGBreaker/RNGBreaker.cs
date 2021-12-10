@@ -106,7 +106,7 @@ namespace RNGBreaker
             for (uint i = start; i < end; i++)
             {
                 var mt = new MT19937(i);
-                for (int j = 0; j < 636; j++)
+                for (int j = 0; j < 626; j++)
                 {
                     var number = mt.Next();
                     if (number == (uint) result.RealNumber)

@@ -42,11 +42,11 @@ namespace RNGBreaker
                 {
                     var lowerMask = 2147483647;
                     var upperMask = 0x80000000;
-                    var temp = (X[i] & upperMask) + X[(i + 1) % n] & lowerMask;
+                    var temp = (X[i] & upperMask) | (X[(i + 1) % n] & lowerMask);
                     var tmpA = temp >> 1;
                     if (temp % 2 != 0)
                     {
-                        tmpA = tmpA ^ (int)a;
+                        tmpA = tmpA ^ a;
                     }
                     X[i] = (uint) (X[(i + m) % n] ^ tmpA);
                 }
