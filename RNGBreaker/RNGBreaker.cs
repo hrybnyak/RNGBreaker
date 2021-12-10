@@ -76,7 +76,7 @@ namespace RNGBreaker
             await WinMt(account, result);
         }
 
-        public async Task<MT19937> BreakMt(AccountResponse account, uint start)
+        private async Task<MT19937> BreakMt(AccountResponse account, uint start)
         {
             var betRequest = new BetRequest
             {
@@ -101,12 +101,12 @@ namespace RNGBreaker
             return null;
         }
 
-        public async Task WinMt (AccountResponse account, MT19937 mtGenerator)
+        private async Task WinMt (AccountResponse account, MT19937 mtGenerator)
         {
             await Win(Mode.Mt, account, () => mtGenerator.Next(), account.Money - 1);
         }
 
-        public async Task Win (Mode mode, AccountResponse account, Func<long> numberGenerator, int accountBalance)
+        private async Task Win (Mode mode, AccountResponse account, Func<long> numberGenerator, int accountBalance)
         {
             var predict = numberGenerator.Invoke();
             var betRequest = new BetRequest
@@ -125,6 +125,35 @@ namespace RNGBreaker
             {
                 await Win(mode, account, numberGenerator, betResult.Account.Money);
             }
+        }
+    
+        public async Task BreakBetterMt()
+        {
+            var account = await _casinoHttpClient.CreateAccount();
+            var result = await BreakBetterMt(account);
+            await WinBetterMt(account, result);
+        }
+
+        private async Task<MT19937> BreakBetterMt(AccountResponse account)
+        {
+            var values = new uint[624];
+            for (int i = 0; i < values.Length; i++)
+            {
+                var betRequest = new BetRequest
+                {
+                    PlayerId = account.Id,
+                    Money = 1,
+                    Number = 1
+                };
+                var result = await _casinoHttpClient.MakeABet(Mode.BetterMt, betRequest);
+                values[i] = (uint)result.RealNumber;
+            }
+            return BetterMTBreaker.BreakBetterMt(values);
+        }
+
+        private async Task WinBetterMt(AccountResponse account, MT19937 mtGenerator)
+        {
+            await Win(Mode.BetterMt, account, () => mtGenerator.Next(), 300);
         }
     }
 }

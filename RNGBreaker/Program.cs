@@ -10,20 +10,11 @@ namespace RNGBreaker
         {
             try
             {
-                //var casinoClient = new CasinoHttpClient();
-                //var rngBreaker = new RNGBreaker(casinoClient);
+                var casinoClient = new CasinoHttpClient();
+                var rngBreaker = new RNGBreaker(casinoClient);
                 //await rngBreaker.BreakLcg();
-                //await rngBreaker.BreakMt();
-                var mt = new MT19937((uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-                var values = new uint[624];
-                for (int i = 0; i < values.Length; i++)
-                {
-                    values[i] = mt.Next();
-                }
-                var broken = BetterMTBreaker.BreakBetterMt(values);
-                var next = mt.Next();
-                var nextBroken = broken.Next();
-                Console.WriteLine(nextBroken == next);
+                await rngBreaker.BreakMt();
+                await rngBreaker.BreakBetterMt();
             }
             catch(Exception ex)
             {
