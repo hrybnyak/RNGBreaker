@@ -34,6 +34,11 @@ namespace RNGBreaker
             Twist();
         }
 
+        public MT19937()
+        {
+
+        }
+
         private void Twist()
         {
             for (int i = 0; i < n; i++)
@@ -69,5 +74,10 @@ namespace RNGBreaker
             return y;
         }
 
+        public void SetInitialState(uint[] states)
+        {
+            X = states;
+            counter = n;
+        }
     }
 }
